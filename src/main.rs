@@ -14,7 +14,7 @@ struct Args {
 
     /// choose the key for the choosen encryption
     #[argh(option, short = 'k', long = "key")]
-    key: u8,
+    key: i16,
 
     /// path to the file which contains unauthorized opcodes
     #[argh(option, short = 'f', long = "file", default = "String::from(\"None\")")]
@@ -65,7 +65,7 @@ fn is_right_format(shellcode : &str) -> bool {
 }
 
 /// Encode the shellcode and add the decoder ahead of it
-fn encode_shellcode(shellcode: String, decoder: &str, key: u8) -> String {
+fn encode_shellcode(shellcode: String, decoder: &str, key: i16) -> String {
     // TODO fonction encodage etape 1
 
     let start_decoder = "\\xeb\\x11\\x5e\\x31\\xc9\\xb1";
@@ -96,15 +96,15 @@ fn encode_shellcode(shellcode: String, decoder: &str, key: u8) -> String {
         let opcode = &shellcode[index_start+2..index_start+4];
         match decoder {
             "sub" => {
-                let encoded_opcode = format!("\\x{:02x}", u8::from_str_radix(opcode, 16).unwrap() - key);
+                let encoded_opcode = format!("\\x{:02x}", (i16::from_str_radix(opcode, 16).unwrap() - key) & 0xff);
                 encoded_shellcode.push_str(&encoded_opcode);
             },
             "add" => {
-                let encoded_opcode = format!("\\x{:02x}", u8::from_str_radix(opcode, 16).unwrap() + key);
+                let encoded_opcode = format!("\\x{:02x}", (i16::from_str_radix(opcode, 16).unwrap() + key) & 0xff);
                 encoded_shellcode.push_str(&encoded_opcode);
             },
             "xor" => {
-                let encoded_opcode = format!("\\x{:02x}", u8::from_str_radix(opcode, 16).unwrap() ^ key);
+                let encoded_opcode = format!("\\x{:02x}", (i16::from_str_radix(opcode, 16).unwrap() ^ key) & 0xff);
                 encoded_shellcode.push_str(&encoded_opcode);
             },
             _ => println!("Error: decoder not found"),
@@ -119,13 +119,6 @@ fn encode_shellcode(shellcode: String, decoder: &str, key: u8) -> String {
 /*
 fn test_rules(shellcode: String, rules: Vec<String>) -> bool {
     // TODO fonction test rules etape 3
-    false
-}*/
-
-/// Read the file which contains the rules and create a list of the rules
-/* 
-fn read_file(path: String) -> bool {
-    //TODO fonction lecture règles + mofidier type de retour etape 2
     false
 }*/
 
@@ -144,6 +137,11 @@ fn main() {
         if args.encoding.contains(method){
             args_good = true;
         }
+    }
+
+    // Check if the key doesn't exceed the limit
+    if args.key > 255 || args.key < 0 {
+        args_good = false;
     }
 
     // Check when auto is enable if a file is provided 
@@ -173,6 +171,8 @@ fn main() {
 
     // Encode the shellcode
     let encoded_shellcode = encode_shellcode(shellcode, &args.encoding, args.key);
+
+    // Read the file if provided
 
     println!("Encoded shellcode: {}", encoded_shellcode);
 
