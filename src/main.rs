@@ -116,16 +116,18 @@ fn encode_shellcode(shellcode: String, decoder: &str, key: u8) -> String {
 }
 
 /// Test if the shellcode pass the rules provided by the user
+/*
 fn test_rules(shellcode: String, rules: Vec<String>) -> bool {
     // TODO fonction test rules etape 3
     false
-}
+}*/
 
 /// Read the file which contains the rules and create a list of the rules
+/* 
 fn read_file(path: String) -> bool {
     //TODO fonction lecture règles + mofidier type de retour etape 2
     false
-}
+}*/
 
 fn main() {
 
