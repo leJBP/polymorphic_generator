@@ -12,7 +12,7 @@ struct Args {
     #[argh(option, short = 'e', long = "enc")]
     encoding: String,
 
-    /// choose which kind of encryption you want
+    /// choose the key for the choosen encryption
     #[argh(option, short = 'k', long = "key")]
     key: u8,
 
