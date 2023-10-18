@@ -14,7 +14,7 @@ struct Args {
 
     /// choose which kind of encryption you want
     #[argh(option, short = 'k', long = "key")]
-    key: i16,
+    key: u8,
 
     /// path to the file which contains unauthorized opcodes
     #[argh(option, short = 'f', long = "file", default = "String::from(\"None\")")]
@@ -31,7 +31,7 @@ fn is_right_format(shellcode : &str) -> bool {
     let mut ret = true;
 
     if good_length != 0 {
-        println!("Length of shellcode is not correct");
+        println!("Error: Length of shellcode is not correct");
         ret = false;
     };
 
@@ -40,15 +40,23 @@ fn is_right_format(shellcode : &str) -> bool {
         for _ in 0..shellcode.len() / 4{
             if shellcode.chars().nth(index_start) != Some('\\') {
                 ret = false;
+                println!("Error: \\ not found at index {}", index_start);
+                break;
             }
             if shellcode.chars().nth(index_start+1) != Some('x') {
                 ret = false;
+                println!("Error: x not found at index {}", index_start+1);
+                break;
             }
             if !shellcode.chars().nth(index_start+2).unwrap().is_ascii_hexdigit() {
                 ret = false;
+                println!("Error: hex digit not found at index {}", index_start+2);
+                break;
             }
             if !shellcode.chars().nth(index_start+2).unwrap().is_ascii_hexdigit() {
                 ret = false;
+                println!("Error: hex digit not found at index {}", index_start+3);
+                break;
             }
             index_start += 4;
         }
@@ -57,27 +65,65 @@ fn is_right_format(shellcode : &str) -> bool {
 }
 
 /// Encode the shellcode and add the decoder ahead of it
-fn encode_shellcode(shellcode: String, decoder: String, key: i16) -> String {
-    // TODO fonction encodage
+fn encode_shellcode(shellcode: String, decoder: &str, key: u8) -> String {
+    // TODO fonction encodage etape 1
 
     let start_decoder = "\\xeb\\x11\\x5e\\x31\\xc9\\xb1";
     let end_decoder = "\\x80\\xe9\\x01\\x75\\xf6\\xeb\\x05\\xe8\\xea\\xff\\xff\\xff";
     let xor_decoder = "\\x80\\x74\\x0e\\xff";
     let add_decoder = "\\x80\\x6c\\x0e\\xff";
     let sub_decoder = "\\x80\\x44\\x0e\\xff";
+    let mut encoded_shellcode = String::new();
+    let length = shellcode.len() / 4;
 
-    shellcode
+    // Creation of the decoder
+    encoded_shellcode.push_str(start_decoder);
+    encoded_shellcode.push_str(&format!("\\x{:02x}", length));
+
+    match decoder {
+        "sub" => encoded_shellcode.push_str(sub_decoder),
+        "add" => encoded_shellcode.push_str(add_decoder),
+        "xor" => encoded_shellcode.push_str(xor_decoder),
+        _ => println!("Error: decoder not found"),
+    }
+
+    encoded_shellcode.push_str(&format!("\\x{:02x}", key));
+    encoded_shellcode.push_str(end_decoder);
+
+    // Encoding the provided shellcode
+    let mut index_start = 0; // Index start opcode
+    for _ in 0..shellcode.len() / 4{
+        let opcode = &shellcode[index_start+2..index_start+4];
+        match decoder {
+            "sub" => {
+                let encoded_opcode = format!("\\x{:02x}", u8::from_str_radix(opcode, 16).unwrap() - key);
+                encoded_shellcode.push_str(&encoded_opcode);
+            },
+            "add" => {
+                let encoded_opcode = format!("\\x{:02x}", u8::from_str_radix(opcode, 16).unwrap() + key);
+                encoded_shellcode.push_str(&encoded_opcode);
+            },
+            "xor" => {
+                let encoded_opcode = format!("\\x{:02x}", u8::from_str_radix(opcode, 16).unwrap() ^ key);
+                encoded_shellcode.push_str(&encoded_opcode);
+            },
+            _ => println!("Error: decoder not found"),
+        }
+        index_start += 4;
+    }
+
+    encoded_shellcode
 }
 
 /// Test if the shellcode pass the rules provided by the user
 fn test_rules(shellcode: String, rules: Vec<String>) -> bool {
-    // TODO fonction test rules
+    // TODO fonction test rules etape 3
     false
 }
 
 /// Read the file which contains the rules and create a list of the rules
 fn read_file(path: String) -> bool {
-    //TODO fonction lecture règles + mofidier type de retour
+    //TODO fonction lecture règles + mofidier type de retour etape 2
     false
 }
 
@@ -87,7 +133,6 @@ fn main() {
     let mut shellcode = String::new();
     let encoding = vec!["sub", "add", "xor"];
     let mut args_good = false;
-    let mut shellcode_format = true;
 
     // Get the arguments
     let args: Args = argh::from_env();
@@ -97,11 +142,6 @@ fn main() {
         if args.encoding.contains(method){
             args_good = true;
         }
-    }
-
-    // Check if the key is a positive integer 
-    if args.key < 0 && args_good {
-        args_good = false;
     }
 
     // Check when auto is enable if a file is provided 
@@ -122,11 +162,16 @@ fn main() {
         .read_line(&mut shellcode)
         .expect("Reading error");
 
-    shellcode_format = is_right_format(&shellcode);
+    let shellcode_format = is_right_format(&shellcode);
 
     // Exit if encoding method doesn't exist
-    if !args_good || !shellcode_format {
+    if !shellcode_format || !args_good {
         process::exit(0x0100);
     }
+
+    // Encode the shellcode
+    let encoded_shellcode = encode_shellcode(shellcode, &args.encoding, args.key);
+
+    println!("Encoded shellcode: {}", encoded_shellcode);
 
 }
