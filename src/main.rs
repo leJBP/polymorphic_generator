@@ -2,6 +2,8 @@ use std::{io, vec};
 use argh::FromArgs;
 use std::process;
 use std::path::Path;
+use std::fs::File;
+use std::io::{BufRead};
 
 /* Structures and enumerations */
 
@@ -116,11 +118,18 @@ fn encode_shellcode(shellcode: String, decoder: &str, key: i16) -> String {
 }
 
 /// Test if the shellcode pass the rules provided by the user
-/*
+
 fn test_rules(shellcode: String, rules: Vec<String>) -> bool {
     // TODO fonction test rules etape 3
     false
-}*/
+}
+
+/// Read a file line by line and return an iterator over the lines
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where P: AsRef<Path>, {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
+}
 
 fn main() {
 
@@ -139,22 +148,34 @@ fn main() {
         }
     }
 
+    if !args_good {
+        println!("Error: encoding method doesn't exist");
+    }
+
     // Check if the key doesn't exceed the limit
-    if args.key > 255 || args.key < 0 {
+    if args_good && (args.key > 255 || args.key < 0) {
+        println!("Error: key must be between 0 and 255");
         args_good = false;
     }
 
     // Check when auto is enable if a file is provided 
     if args.auto && args_good {
+        println!("Error: auto require a provided file which contain unauthorized opcodes");
         args_good = !args.file.contains("None");
     }
 
     // Check if the file exist 
     if !args.file.contains("None") && args_good {
         args_good = Path::new(&args.file).exists();
+        if !args_good {
+            println!("Error: file doesn't exist");
+        }
     }
 
-    // Check shellcode format 
+    // Exit if encoding method doesn't exist
+    if !args_good {
+        process::exit(0x0100);
+    }
 
     // Get the shellcode from the user
     println!("shellcode with format \\x..");
@@ -162,17 +183,22 @@ fn main() {
         .read_line(&mut shellcode)
         .expect("Reading error");
 
+    // Check shellcode format 
     let shellcode_format = is_right_format(&shellcode);
 
-    // Exit if encoding method doesn't exist
-    if !shellcode_format || !args_good {
+    // Exit if shellcode format is not met
+    if !shellcode_format {
         process::exit(0x0100);
     }
 
     // Encode the shellcode
     let encoded_shellcode = encode_shellcode(shellcode, &args.encoding, args.key);
 
-    // Read the file if provided
+    // Read the file which contain unauthorized opcodes
+    if let Ok(lines) = read_lines(args.file) {
+        
+    }
+
 
     println!("Encoded shellcode: {}", encoded_shellcode);
 
