@@ -5,6 +5,11 @@ use std::path::Path;
 use std::process;
 use std::{io, vec};
 
+/*  Written by Jean-Baptiste PREVOST
+    Mail : jb [dot] prevost62 [at] gmail [dot] com
+
+    Inspired by Jonathan Salwan version             */
+
 /* Structures */
 
 #[derive(FromArgs)]
@@ -139,7 +144,6 @@ fn encode_shellcode(shellcode: &str, decoder: &str, key: i16) -> String {
 }
 
 /// Test if the shellcode pass the rules provided by the user
-
 fn test_rules(shellcode: &str, rules: Vec<String>) -> bool {
     let mut ret = true;
 
