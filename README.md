@@ -33,10 +33,10 @@ The file you can provide should contain all the opcodes you doesn't want in your
 The file should have the following format :
 
 ```
-09
-0a
-0b
-08 05  (here you doesn't allow your shellcode to have the \x08\x05 combination in your shellcode)
+\x09
+\x0a
+\x0b
+\x08\x05  (here you doesn't allow your shellcode to have the \x08\x05 combination in your shellcode)
 ```
 
 Concerning the key the value should be between 0 and 255.
