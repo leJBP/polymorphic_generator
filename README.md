@@ -41,10 +41,6 @@ The file should have the following format :
 
 Concerning the key the value should be between 0 and 255.
 
-## TODO list
-
-There is still the file and auto option to implement
-
 ## Thanking
 
 This program is inspired from the Jonathan Salwan version which was written in C.
