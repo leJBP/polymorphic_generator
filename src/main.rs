@@ -195,12 +195,15 @@ fn main() {
 
     // Check when auto is enable if a file is provided
     if args.auto && args_good {
+        args_good = !args.file.contains("None");
+
         if args.key != 0 {
             println!("Error: key must be equal to 0 or not provided when auto is enable");
+            args_good = false;
         } else {
             println!("Error: auto require a provided file which contain unauthorized opcodes");
         }
-        args_good = !args.file.contains("None");
+
     }
 
     // Check if the file exist
@@ -273,6 +276,7 @@ fn main() {
             println!("Shellcode pass the rules with the key {}\n", key_test);
         } else {
             if args.auto {
+                println!("\nAuto mode activated");
                 println!("Shellcode doesn't pass the rules with all the keys\n");
             } else {
                 println!("Shellcode doesn't pass the rules with the key {}\n", key_test);
