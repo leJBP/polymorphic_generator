@@ -1,6 +1,6 @@
 # Polymorphism shellcode generator
 
-This little project allow the user to create a polymorphic shellcode from a given shellcode.
+This little project allow the user to create a polymorphic shellcode from a given shellcode for x86 architecture and maybe in the future for ohter architecture like ARM.
 
 ## Build
 
